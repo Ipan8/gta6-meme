@@ -1,7 +1,7 @@
 // GTA 6 meme entry — program for make.fun bounty gta6-meme-x-01.
 // Copies POST.json (the X post address) to the output directory.
 // Stdlib only, no network. Node 22.
-import { copyFileSync, mkdirSync, existsSync } from "node:fs";
+import { copyFileSync, mkdirSync, existsSync, readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -11,6 +11,17 @@ const src = join(here, "POST.json");
 
 if (!existsSync(src)) {
   throw new Error("POST.json not found next to main.ts");
+}
+let post;
+try {
+  post = JSON.parse(readFileSync(src, "utf8"));
+} catch {
+  console.error("invalid POST.json: not valid JSON");
+  process.exit(1);
+}
+if (typeof post?.url !== "string" || !/^https:\/\/(x\.com|twitter\.com)\/[^/]+\/status\/[0-9]+$/.test(post.url)) {
+  console.error("invalid POST.json: url must be https://x.com/<handle>/status/<id>");
+  process.exit(1);
 }
 mkdirSync(outDir, { recursive: true });
 copyFileSync(src, join(outDir, "POST.json"));
